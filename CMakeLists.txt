@@ -43,6 +43,7 @@ add_library(phasor_injection STATIC
 add_library(comtrade_replay STATIC
     ${PROJECT_SOURCE_DIR}/src/comtrade_replay_test.cpp
 )
+target_link_libraries(comtrade_replay PRIVATE comtrade_parser)
 
 # Main application
 add_executable(${PROJECT_NAME}

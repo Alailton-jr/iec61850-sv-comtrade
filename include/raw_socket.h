@@ -153,6 +153,10 @@ public:
             return false;
         }
         
+        // return true;    
+
+        isOpen_ = true;
+
         // **Performance optimizations for Linux**
         
         // 1. Set socket to non-blocking mode for async I/O
@@ -167,6 +171,8 @@ public:
         setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf));
         setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf));
         
+        
+
         // 3. Disable routing lookups for raw sockets (bypass kernel routing)
         int dontroute = 1;
         setsockopt(fd_, SOL_SOCKET, SO_DONTROUTE, &dontroute, sizeof(dontroute));
@@ -179,6 +185,7 @@ public:
         int timestamp = 1;
         setsockopt(fd_, SOL_SOCKET, SO_TIMESTAMP, &timestamp, sizeof(timestamp));
         
+
         // 6. Set to promiscuous mode to capture all packets on interface
         struct packet_mreq mreq;
         std::memset(&mreq, 0, sizeof(mreq));
@@ -186,7 +193,6 @@ public:
         mreq.mr_type = PACKET_MR_PROMISC;
         setsockopt(fd_, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
         
-        isOpen_ = true;
         return true;
         
 #else

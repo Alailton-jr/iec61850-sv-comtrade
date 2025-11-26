@@ -1,0 +1,251 @@
+================================================================================
+IEC 61850 SV COMTRADE - Installation Requirements for Linux
+================================================================================
+
+This document lists all necessary libraries and packages required to build
+and run the IEC 61850 SV COMTRADE application on Linux distributions.
+
+================================================================================
+PROJECT OVERVIEW
+================================================================================
+
+Project Name: VirtualTestSet (IEC 61850 SV COMTRADE)
+Version: 1.0.0
+Language: C++17
+Build System: CMake (minimum version 3.15)
+
+The application provides:
+- COMTRADE file parsing and replay
+- IEC 61850-9-2 Sampled Value (SV) packet generation
+- IEC 61850-8-1 GOOSE message decoding
+- Phasor injection testing
+- Layer 2 raw socket communication
+
+================================================================================
+REQUIRED LIBRARIES AND PACKAGES
+================================================================================
+
+1. BUILD ESSENTIALS
+-------------------
+   - C++ compiler with C++17 support (GCC 7+ or Clang 5+)
+   - CMake build system (version 3.15 or higher)
+   - Make or Ninja build tool
+   - Git (for version control)
+
+2. STANDARD C++ LIBRARIES (Built-in)
+-------------------------------------
+   The following are part of the C++ Standard Library:
+   - <iostream>, <string>, <vector>, <map>, <array>
+   - <thread>, <atomic>, <chrono>, <functional>
+   - <fstream>, <sstream>, <iomanip>
+   - <cstdint>, <cstring>, <cmath>, <cctype>, <cerrno>
+   - <algorithm>, <stdexcept>
+
+3. POSIX/LINUX SYSTEM LIBRARIES (Built-in on Linux)
+----------------------------------------------------
+   - pthread (POSIX threads) - Required for threading
+   - time.h (POSIX time) - Required for high-precision timers
+   - Socket libraries (sys/socket.h, sys/types.h)
+   - Network interface libraries (net/if.h, sys/ioctl.h)
+   - Packet socket support (linux/if_packet.h, linux/if_ether.h)
+   - Network byte order (arpa/inet.h, netinet/in.h)
+   - Interface address (ifaddrs.h)
+
+4. LINUX KERNEL HEADERS
+------------------------
+   - linux-headers or linux-kernel-headers package
+   - Provides access to Linux-specific networking APIs
+
+================================================================================
+INSTALLATION COMMANDS BY DISTRIBUTION
+================================================================================
+
+DEBIAN / UBUNTU / LINUX MINT
+-----------------------------
+sudo apt-get update
+sudo apt-get install -y build-essential cmake git
+sudo apt-get install -y linux-headers-$(uname -r)
+sudo apt-get install -y libpthread-stubs0-dev
+
+
+FEDORA / RHEL / CENTOS / ROCKY LINUX
+-------------------------------------
+sudo dnf groupinstall -y "Development Tools"
+sudo dnf install -y cmake git
+sudo dnf install -y kernel-headers kernel-devel
+
+ARCH LINUX / MANJARO
+---------------------
+sudo pacman -Syu
+sudo pacman -S --needed base-devel cmake git
+sudo pacman -S --needed linux-headers
+
+OPENSUSE / SUSE
+---------------
+sudo zypper install -y -t pattern devel_basis
+sudo zypper install -y cmake git
+sudo zypper install -y kernel-default-devel
+
+ALPINE LINUX
+------------
+sudo apk add --no-cache build-base cmake git
+sudo apk add --no-cache linux-headers
+
+GENTOO
+------
+sudo emerge --ask dev-util/cmake sys-devel/gcc
+sudo emerge --ask sys-kernel/linux-headers
+
+================================================================================
+MINIMAL INSTALLATION (Most Common)
+================================================================================
+
+For most modern Linux distributions with standard development tools:
+
+Ubuntu/Debian:
+    sudo apt-get update && sudo apt-get install -y build-essential cmake git
+
+Fedora/RHEL:
+    sudo dnf groupinstall -y "Development Tools" && sudo dnf install -y cmake git
+
+Arch Linux:
+    sudo pacman -S --needed base-devel cmake git
+
+================================================================================
+BUILD INSTRUCTIONS
+================================================================================
+
+After installing the required packages, build the project:
+
+1. Clone or navigate to the project directory:
+   cd /home/eesc/iec61850-sv-comtrade
+
+2. Create a build directory:
+   mkdir -p build
+   cd build
+
+3. Configure with CMake:
+   cmake ..
+
+   # Alternative: Specify build type
+   cmake -DCMAKE_BUILD_TYPE=Release ..
+   # Or for debugging:
+   cmake -DCMAKE_BUILD_TYPE=Debug ..
+
+4. Build the project:
+   make -j$(nproc)
+
+   # Or with verbose output:
+   make VERBOSE=1
+
+5. (Optional) Install system-wide:
+   sudo make install
+
+================================================================================
+RUNTIME REQUIREMENTS
+================================================================================
+
+RAW SOCKET PERMISSIONS
+-----------------------
+The application requires raw socket access for Layer 2 packet injection.
+You need either:
+
+Option 1 - Run as root (not recommended):
+    sudo ./VirtualTestSet
+
+Option 2 - Grant CAP_NET_RAW capability (recommended):
+    sudo setcap cap_net_raw+ep ./VirtualTestSet
+    ./VirtualTestSet
+
+Option 3 - Add user to specific group (distribution-dependent):
+    # On some systems:
+    sudo usermod -aG netdev $USER
+    # Then logout and login again
+
+NETWORK INTERFACE
+-----------------
+- Ensure the network interface you want to use exists
+- Check available interfaces: ip link show
+- The default interface in code is "en0" (may need to change to "eth0", 
+  "ens33", "enp0s3", etc., depending on your system)
+
+================================================================================
+VERIFICATION
+================================================================================
+
+Check if all tools are installed correctly:
+
+    # Check GCC version (should be 7.0 or higher)
+    gcc --version
+
+    # Check CMake version (should be 3.15 or higher)
+    cmake --version
+
+    # Check if pthread is available
+    ldconfig -p | grep pthread
+
+    # Check kernel headers
+    ls /usr/src/linux-headers-$(uname -r) 2>/dev/null || \
+    ls /usr/include/linux/if_packet.h
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "CMake version is too old"
+Solution: Install a newer CMake from official repositories or build from source
+    wget https://github.com/Kitware/CMake/releases/download/v3.27.0/cmake-3.27.0-linux-x86_64.sh
+    sudo sh cmake-3.27.0-linux-x86_64.sh --prefix=/usr/local --skip-license
+
+Problem: "linux/if_packet.h: No such file or directory"
+Solution: Install kernel headers for your distribution (see commands above)
+
+Problem: "Cannot open raw socket: Operation not permitted"
+Solution: Run with sudo or set CAP_NET_RAW capability (see Runtime Requirements)
+
+Problem: "Network interface not found"
+Solution: 
+    1. List interfaces: ip link show
+    2. Update interface name in configuration or command line arguments
+
+Problem: Compilation fails with C++17 errors
+Solution: Update GCC/Clang:
+    # Ubuntu/Debian
+    sudo apt-get install -y g++-9
+    export CXX=g++-9
+
+================================================================================
+NO EXTERNAL DEPENDENCIES REQUIRED
+================================================================================
+
+This project uses only:
+- C++17 Standard Library (built into compiler)
+- POSIX/Linux system libraries (built into OS)
+- Linux kernel networking APIs (via headers)
+
+NO additional third-party libraries (like Boost, libpcap, etc.) are required!
+
+================================================================================
+SUMMARY OF COMMANDS (Ubuntu/Debian Example)
+================================================================================
+
+# 1. Install build tools
+sudo apt-get update
+sudo apt-get install -y build-essential cmake git linux-headers-$(uname -r)
+
+# 2. Build project
+cd /home/eesc/iec61850-sv-comtrade
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j$(nproc)
+
+# 3. Grant permissions
+sudo setcap cap_net_raw+ep ./VirtualTestSet
+sudo setcap cap_net_raw+ep ./phasor_test
+
+# 4. Run
+./VirtualTestSet --help
+
+================================================================================
+GENERATED: November 26, 2025
+================================================================================

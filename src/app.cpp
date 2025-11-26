@@ -98,7 +98,7 @@ int testComtradeReplay(ComtradeReplayConfig config) {
 
 int run_phasor_injection(){
     PhasorInjectionConfig config;
-    config.interface = "en0";
+    config.interface = "eth0";
     config.dstMac = "01:0C:CD:01:00:00";
     config.vlanId = 4;
     config.vlanPriority = 4;
@@ -124,24 +124,50 @@ int run_phasor_injection(){
 }
 
 int run_comtrade_replay(){
-    ComtradeReplayConfig config = {
-        .cfgFilePath = "FRA00030.cfg",
-        .interface = "en0",
-        .sampleRate = 4800,
-        .verboseOutput = true,
-        .progressInterval = 1000,
-        .loopPlayback = false,
-        .enableGooseMonitoring = false,
-        .channelMapping = {
-            {"3TCC9:I A", 0},
-            {"3TCC9:I B", 1},
-            {"3TCC9:I C", 2},
-            {"3TCC9:IN", 3},
-            {"3TPM3:V A", 4},
-            {"3TPM3:V B", 5},
-            {"3TPM3:V C", 6},
-        }
+    ComtradeReplayConfig config;
+    
+    // COMTRADE file paths
+    config.cfgFilePath = "FRA00030.cfg";
+    config.datFilePath = "";  // Auto-detected
+    
+    // Network configuration
+    config.interface = "en0";
+    config.dstMac = "01:0C:CD:01:00:00";
+    config.srcMac = "";  // Auto-detected
+    
+    // VLAN configuration
+    config.vlanId = 4;
+    config.vlanPriority = 4;
+    
+    // SV configuration
+    config.appId = 0x4000;
+    config.svId = "ComtradeReplay";
+    config.sampleRate = 4800;
+    
+    // Channel mapping
+    config.channelMapping = {
+        {"3TCC9:I A", 0},
+        {"3TCC9:I B", 1},
+        {"3TCC9:I C", 2},
+        {"3TCC9:IN", 3},
+        {"3TPM3:V A", 4},
+        {"3TPM3:V B", 5},
+        {"3TPM3:V C", 6},
     };
+    
+    // GOOSE stop configuration
+    config.stopGooseRef = "STOP";
+    config.enableGooseMonitoring = false;
+    
+    // Replay control
+    config.loopPlayback = false;
+    config.startTimeOffset = 0.0;
+    config.endTimeOffset = 0.0;
+    
+    // Display configuration
+    config.verboseOutput = true;
+    config.progressInterval = 1000;
+    
     return testComtradeReplay(config);
 }
 
