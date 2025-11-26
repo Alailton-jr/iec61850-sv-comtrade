@@ -1,11 +1,6 @@
 #include "app.h"
 #include <iostream>
 #include <csignal>
-#include <atomic>
-#include <fstream>
-#include <iomanip>
-#include <algorithm>
-#include "comtrade_parser.h"
 #include "phasor_injection_test.h"
 #include "comtrade_replay_test.h"
 #include "scd_parser.h"
@@ -31,20 +26,100 @@ App::~App() {
     // Destructor
 }
 
+int testPhasorInjection(PhasorInjectionConfig config) {
+    // Create test instance
+    PhasorInjectionTest test;
+    
+    // Register signal handler
+    g_phasorTestInstance = &test;
+    std::signal(SIGINT, signalHandler);
+    
+    // Optional: Set callbacks
+    test.setGooseCallback([](const std::string& gocbRef, uint32_t stNum, uint32_t sqNum) {
+        std::cout << "[Callback] GOOSE: " << gocbRef 
+                  << " (stNum=" << stNum << ", sqNum=" << sqNum << ")" << std::endl;
+    });
+    
+    // Progress callback is handled by the class when verboseOutput is true
+    test.setProgressCallback([](uint32_t, double) {
+        // Custom progress handling if needed
+    });
+    
+    // Configure the test
+    if (!test.configure(config)) {
+        std::cerr << "Failed to configure test: " << test.getLastError() << std::endl;
+        return 1;
+    }
+    
+    // Run the test
+    if (!test.run()) {
+        std::cerr << "Failed to run test: " << test.getLastError() << std::endl;
+        return 1;
+    }
+    
+    // Get and display statistics
+    auto stats = test.getStatistics();
+    std::cout << "\nFinal Statistics:" << std::endl;
+    std::cout << "  Packets sent: " << stats.packetsSent << std::endl;
+    std::cout << "  Packets failed: " << stats.packetsFailed << std::endl;
+    std::cout << "  Average rate: " << stats.getAverageRate() << " packets/sec" << std::endl;
+    
+    g_phasorTestInstance = nullptr;
+    return 0;
+}
+
+int testComtradeReplay(ComtradeReplayConfig config) {
+    
+    // Create test instance
+    ComtradeReplayTest test;
+    
+    // Register signal handler
+    g_comtradeTestInstance = &test;
+    std::signal(SIGINT, signalHandler);
+    
+    
+    // Configure the test
+    if (!test.configure(config)) {
+        std::cerr << "Failed to configure test: " << test.getLastError() << std::endl;
+        g_comtradeTestInstance = nullptr;
+        return 1;
+    }
+    
+    // Run the test
+    if (!test.run()) {
+        std::cerr << "Failed to run test: " << test.getLastError() << std::endl;
+        g_comtradeTestInstance = nullptr;
+        return 1;
+    }
+    
+    g_comtradeTestInstance = nullptr;
+    return 0;
+}
+
 int run_phasor_injection(){
-    PhasorInjectionConfig config = {
-        .interface = "en0",
-        .dstMac = "01:0C:CD:01:00:00",
-        .vlanId = 4,
-        .vlanPriority = 4,
-        .appId = 0x4000,
-        .svId = "TestSV01",
-        .sampleRate = 4800,
-        .stopGooseRef = "STOP",
-        .enableGooseMonitoring = false,
-        .verboseOutput = true,
-        .progressInterval = 1000
-    };
+    PhasorInjectionConfig config;
+    config.interface = "en0";
+    config.dstMac = "01:0C:CD:01:00:00";
+    config.vlanId = 4;
+    config.vlanPriority = 4;
+    config.appId = 0x4000;
+    config.svId = "TestSV01";
+    config.sampleRate = 4800;
+    config.stopGooseRef = "STOP";
+    config.enableGooseMonitoring = false;
+    config.verboseOutput = true;
+    config.progressInterval = 1000;
+    
+    // Set phasors: [magnitude, phase_degrees]
+    config.phasors[0][0] = 100.0;    config.phasors[0][1] = 0.0;      // IA
+    config.phasors[1][0] = 100.0;    config.phasors[1][1] = -120.0;   // IB
+    config.phasors[2][0] = 100.0;    config.phasors[2][1] = 120.0;    // IC
+    config.phasors[3][0] = 0.0;      config.phasors[3][1] = 0.0;      // IN
+    config.phasors[4][0] = 69500.0;  config.phasors[4][1] = 0.0;      // VA
+    config.phasors[5][0] = 69500.0;  config.phasors[5][1] = -120.0;   // VB
+    config.phasors[6][0] = 69500.0;  config.phasors[6][1] = 120.0;    // VC
+    config.phasors[7][0] = 0.0;      config.phasors[7][1] = 0.0;      // VN
+    
     return testPhasorInjection(config);
 }
 
@@ -116,9 +191,9 @@ int save_scd_file(const std::string& path) {
 
 int App::run(int, char**) {
 
-    // run_phasor_injection();
+    run_phasor_injection();
     // run_comtrade_replay();
-    save_scd_file("generated_scd.scd");
+    // save_scd_file("generated_scd.scd");
     return 0;
 }
 
