@@ -272,19 +272,42 @@ void PhasorInjectionTest::transmissionLoop() {
     
     // High-precision timer setup (following transient.cpp approach)
     Timer timer;
-    struct timespec t_ini, t_start;
+    struct timespec t_ini, t_start, now_realtime;
     
     // Calculate wait period in nanoseconds for sample rate
     long waitPeriod = static_cast<long>(1e9 / config_.sampleRate);
     
-    // Get current time and align to next second boundary for synchronized start
-    clock_gettime(CLOCK_MONOTONIC, &t_ini);
-    if (t_ini.tv_nsec > static_cast<long>(5e8)) {
-        t_ini.tv_sec += 2;
-    } else {
-        t_ini.tv_sec += 1;
+    // Get current REALTIME to align to next full second boundary (e.g., 20.000000)
+    clock_gettime(CLOCK_REALTIME, &now_realtime);
+    
+    // Wait until the next full second boundary
+    struct timespec next_second;
+    next_second.tv_sec = now_realtime.tv_sec + 1;
+    next_second.tv_nsec = 0;
+    
+    if (config_.verboseOutput) {
+        std::cout << "Current time: " << now_realtime.tv_sec << "." 
+                  << std::setfill('0') << std::setw(9) << now_realtime.tv_nsec << std::endl;
+        std::cout << "Waiting until: " << next_second.tv_sec << ".000000000" << std::endl;
     }
-    t_ini.tv_nsec = 0;
+    
+    // Sleep until next second boundary (platform-specific)
+#ifdef __linux__
+    clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_second, nullptr);
+#else
+    // macOS: Calculate relative sleep time
+    struct timespec sleep_duration;
+    sleep_duration.tv_sec = 0;
+    sleep_duration.tv_nsec = 1000000000L - now_realtime.tv_nsec;
+    if (sleep_duration.tv_nsec >= 1000000000L) {
+        sleep_duration.tv_sec++;
+        sleep_duration.tv_nsec -= 1000000000L;
+    }
+    nanosleep(&sleep_duration, nullptr);
+#endif
+    
+    // Now get MONOTONIC time for the periodic timer (maintains relative precision)
+    clock_gettime(CLOCK_MONOTONIC, &t_ini);
     
     // Pre-build initial frame outside the loop
     auto svPayload = sv.buildPacket(config_.phasors);
