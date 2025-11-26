@@ -18,7 +18,7 @@ struct SVStreamConfig {
     std::string svID;           // SV ID string
     uint32_t confRev;           // Configuration revision
     uint8_t smpSynch;           // Sample synchronization (0=none, 1=local, 2=global)
-    std::string interface;      // Network interface name (e.g., "eth0")
+    std::string iface;      // Network interface name (e.g., "eth0")
 };
 
 /**

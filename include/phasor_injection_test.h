@@ -20,7 +20,7 @@ class SampledValue;
  */
 struct PhasorInjectionConfig {
     // Network configuration
-    std::string interface = "en0";
+    std::string iface = "en0";
     std::string dstMac = "01:0C:CD:01:00:00";  // SV multicast
     std::string srcMac;  // Auto-detected from interface
     

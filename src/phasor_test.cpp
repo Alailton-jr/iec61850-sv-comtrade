@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     
     // Parse command line arguments
     if (argc > 1) {
-        config.interface = argv[1];
+        config.iface = argv[1];
     }
     
     // Get phasor values from user

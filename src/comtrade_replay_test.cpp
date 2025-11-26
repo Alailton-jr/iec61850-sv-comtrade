@@ -31,15 +31,15 @@ bool ComtradeReplayTest::configure(const ComtradeReplayConfig& config) {
     // Auto-detect source MAC if not provided
     if (config_.srcMac.empty()) {
         RawSocket tempSocket;
-        if (!tempSocket.open(config_.interface)) {
-            lastError_ = "Failed to open interface " + config_.interface + " to detect MAC address";
+        if (!tempSocket.open(config_.iface)) {
+            lastError_ = "Failed to open interface " + config_.iface + " to detect MAC address";
             return false;
         }
         config_.srcMac = tempSocket.getMacAddress();
         tempSocket.close();
         
         if (config_.srcMac == "00:00:00:00:00:00") {
-            lastError_ = "Failed to detect MAC address for interface " + config_.interface;
+            lastError_ = "Failed to detect MAC address for interface " + config_.iface;
             return false;
         }
     }
@@ -50,7 +50,7 @@ bool ComtradeReplayTest::configure(const ComtradeReplayConfig& config) {
         return false;
     }
     
-    if (config_.interface.empty()) {
+    if (config_.iface.empty()) {
         lastError_ = "Interface name cannot be empty";
         return false;
     }
@@ -225,7 +225,7 @@ bool ComtradeReplayTest::run() {
         return false;
     }
     
-    if (config_.interface.empty() || numSamples_ == 0) {
+    if (config_.iface.empty() || numSamples_ == 0) {
         lastError_ = "Test not configured. Call configure() first";
         return false;
     }
@@ -297,7 +297,7 @@ void ComtradeReplayTest::setProgressCallback(
 
 void ComtradeReplayTest::gooseCaptureThreadFunc() {
     RawSocket socket;
-    if (!socket.open(config_.interface)) {
+    if (!socket.open(config_.iface)) {
         if (config_.verboseOutput) {
             std::cerr << "Warning: Failed to open socket for GOOSE monitoring" << std::endl;
         }
@@ -358,8 +358,8 @@ void ComtradeReplayTest::gooseCaptureThreadFunc() {
 void ComtradeReplayTest::transmissionLoop() {
     // Open raw socket
     RawSocket socket;
-    if (!socket.open(config_.interface)) {
-        lastError_ = "Failed to open raw socket on " + config_.interface;
+    if (!socket.open(config_.iface)) {
+        lastError_ = "Failed to open raw socket on " + config_.iface;
         std::cerr << "Error: " << lastError_ << std::endl;
         std::cerr << "Note: This program requires root privileges (sudo)" << std::endl;
         running_ = false;
@@ -401,7 +401,13 @@ void ComtradeReplayTest::transmissionLoop() {
     t_ini.tv_nsec = 0;
     
     // Start timer
+#ifdef _WIN32
+    // On Windows, start from current time (no timespec)
+    timer.start_period(waitPeriod);
+#else
+    // On Unix, use timespec for precise alignment
     timer.start_period(t_ini);
+#endif
     timer.wait_period(waitPeriod);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     
@@ -487,7 +493,7 @@ void ComtradeReplayTest::transmissionLoop() {
 void ComtradeReplayTest::printConfiguration() const {
     std::cout << "\n=== COMTRADE Replay Configuration ===" << std::endl;
     std::cout << "COMTRADE file: " << config_.cfgFilePath << std::endl;
-    std::cout << "Network interface: " << config_.interface << std::endl;
+    std::cout << "Network interface: " << config_.iface << std::endl;
     std::cout << "Source MAC: " << config_.srcMac << std::endl;
     std::cout << "Destination MAC: " << config_.dstMac << std::endl;
     std::cout << "VLAN: ID=" << config_.vlanId 

@@ -98,7 +98,7 @@ int testComtradeReplay(ComtradeReplayConfig config) {
 
 int run_phasor_injection(){
     PhasorInjectionConfig config;
-    config.interface = "eth0";
+    config.iface = "eth0";
     config.dstMac = "01:0C:CD:01:00:00";
     config.vlanId = 4;
     config.vlanPriority = 4;
@@ -131,7 +131,7 @@ int run_comtrade_replay(){
     config.datFilePath = "";  // Auto-detected
     
     // Network configuration
-    config.interface = "en0";
+    config.iface = "en0";
     config.dstMac = "01:0C:CD:01:00:00";
     config.srcMac = "";  // Auto-detected
     

@@ -1,4 +1,4 @@
-#include "phasor_injection_test.h"
+﻿#include "phasor_injection_test.h"
 #include "ethernet.h"
 #include "vlan.h"
 #include "sampled_value.h"
@@ -147,8 +147,8 @@ void PhasorInjectionTest::printConfiguration() const {
     for (int i = 0; i < 8; i++) {
         std::cout << "  " << labels[i] << ": " 
                   << std::fixed << std::setprecision(2)
-                  << config_.phasors[i][0] << " ∠ " 
-                  << config_.phasors[i][1] << "°" << std::endl;
+                  << config_.phasors[i][0] << " âˆ  " 
+                  << config_.phasors[i][1] << "Â°" << std::endl;
     }
     std::cout << std::endl;
 }
@@ -318,13 +318,7 @@ void PhasorInjectionTest::transmissionLoop() {
     frame.insert(frame.end(), svPayload.begin(), svPayload.end());
     
     // Start timer at aligned time
-#ifdef _WIN32
-    // On Windows, start from current time (no timespec)
-    timer.start_period(waitPeriod);
-#else
-    // On Unix, use timespec for precise alignment
     timer.start_period(t_ini);
-#endif
     timer.wait_period(waitPeriod);
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     
@@ -382,3 +376,4 @@ void PhasorInjectionTest::transmissionLoop() {
         std::cout << "\nStopping transmission..." << std::endl;
     }
 }
+

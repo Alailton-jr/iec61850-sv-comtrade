@@ -8,6 +8,11 @@
 #include <cmath>
 #include "iec61850_types.h"
 
+// Define M_PI if not defined (Windows)
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 /**
  * @brief IEC 61850-9-2 Sampled Value packet builder
  * 
