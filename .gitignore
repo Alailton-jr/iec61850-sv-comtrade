@@ -1,0 +1,42 @@
+# CMake build artifacts
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Build output
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+iec61850_sv_comtrade
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dependency directories
+vendor/
+third_party/
+
+# Testing
+Testing/
+*.gcda
+*.gcno
+*.gcov
+
+# Package managers
+conan.lock
+.conan/
+vcpkg_installed/
+.cache/
