@@ -190,7 +190,6 @@ int save_scd_file(const std::string& path) {
 }
 
 int App::run(int, char**) {
-
     run_phasor_injection();
     // run_comtrade_replay();
     // save_scd_file("generated_scd.scd");
